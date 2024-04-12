@@ -1,8 +1,15 @@
-library(remotes)
-remotes::install_github("satijalab/seurat", "seurat5", quiet = TRUE)
-remotes::install_github("satijalab/seurat-data", "seurat5", quiet = TRUE)
-remotes::install_github("satijalab/azimuth", "seurat5", quiet = TRUE)
-remotes::install_github("satijalab/seurat-wrappers", "seurat5", quiet = TRUE)
-remotes::install_github("stuart-lab/signac", "seurat5", quiet = TRUE)
-remotes::install_github("bnprks/BPCells", quiet = TRUE)
+# Enter commands in R (or R studio, if installed)
+library(Seurat)
+
+setRepositories(ind = 1:3, addURLs = c('https://satijalab.r-universe.dev', 'https://bnprks.r-universe.dev/'))
+install.packages(c("BPCells", "presto", "glmGamPoi"))
+
+# Install the remotes package
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes")
+}
+install.packages('Signac')
+remotes::install_github("satijalab/seurat-data", quiet = TRUE)
+remotes::install_github("satijalab/azimuth", quiet = TRUE)
+remotes::install_github("satijalab/seurat-wrappers", quiet = TRUE)
 
