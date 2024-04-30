@@ -109,8 +109,10 @@ objs[["nsg_control_2"]]$pool <- "2F2M"
 objs[["nsg_control_3"]]$pool <- "2M"
 
 # perform cca integration
-int_feats <- SelectIntegrationFeatures(objs)
-int_list <- PrepSCTIntegration(object.list = objs,
+seurat_objs <- objs[1:3]
+
+int_feats <- SelectIntegrationFeatures(seurat_objs)
+int_list <- PrepSCTIntegration(object.list = seurat_objs,
                                anchor.features = int_feats)
 int_anchors <- FindIntegrationAnchors(object.list = int_list,
                                       normalization.method = "SCT",
@@ -129,8 +131,8 @@ tree <- clustree(cca)
 cca <- FindClusters(cca, resolution = 0.3)
 
 # perform rpca integration
-int_feats <- SelectIntegrationFeatures(objs)
-int_list <- PrepSCTIntegration(object.list = objs,
+int_feats <- SelectIntegrationFeatures(seurat_objs)
+int_list <- PrepSCTIntegration(object.list = seurat_objs,
                                anchor.features = int_feats)
 int_anchors <- FindIntegrationAnchors(object.list = int_list,
                                       normalization.method = "SCT",
