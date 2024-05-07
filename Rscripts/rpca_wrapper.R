@@ -16,6 +16,4 @@ rpca <- rpca %>%
   FindClusters()
 resolution.range <- seq(from = 0, to = 1, by = 0.1)
 rpca <- FindClusters(rpca, resolution = resolution.range)
-tree <- clustree(rpca)
-rpca <- FindClusters(rpca, resolution = 0.3)
 rpca <- as.SingleCellExperiment(rpca)
