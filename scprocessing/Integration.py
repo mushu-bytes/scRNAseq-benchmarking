@@ -5,23 +5,27 @@ from anndata import AnnData
 import scanpy.external as sce
 from .PipelineStep import PipelineStep
 
+
 class Integration(PipelineStep):
-    def __init__(self, method: str = "scanorama", key: str = "Trial", resolution: int = 0.3):
+    def __init__(
+        self, method: str = "scanorama", key: str = "Trial", resolution: int = 0.3
+    ):
         """
-            Method: Integration Method
-            Key: Key differentiating different datasets 
-            Resolution: Clustering resolution
-            will add additional parameters for normalization
+        Method: Integration Method
+        Key: Key differentiating different datasets
+        Resolution: Clustering resolution
+        will add additional parameters for normalization
         """
         self.method = method
         self.key = key
         self.resolution = resolution
+
     def apply(self, datasets: List[AnnData]) -> AnnData:
         """
         Parameters:
             Datasets: list of datasets to concatenate
-            
-        Return Value: 
+
+        Return Value:
             AnnData object containing PCA, Integration, Nearest Neighbor, UMAP, and Clustering results
         """
         print("Integrating Datasets")
@@ -39,9 +43,11 @@ class Integration(PipelineStep):
             raise ValueError("Invalid Integration Method")
         sc.tl.umap(dataset)
         sc.tl.leiden(
-            dataset, key_added="clusters", n_iterations=2, directed=False, resolution=self.resolution
+            dataset,
+            key_added="clusters",
+            n_iterations=2,
+            directed=False,
+            resolution=self.resolution,
         )
-        sc.pl.umap(
-            dataset, color=["clusters"], palette=sc.pl.palettes.default_20
-        )
+        sc.pl.umap(dataset, color=["clusters"], palette=sc.pl.palettes.default_20)
         return dataset
