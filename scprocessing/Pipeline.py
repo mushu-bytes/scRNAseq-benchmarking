@@ -5,11 +5,17 @@ from anndata import AnnData
 import scanpy.external as sce
 from .PipelineStep import PipelineStep
 
-class Pipeline():
-    def __init__(self):
-        self.steps = []
+
+class Pipeline:
+    def __init__(self, steps: List[PipelineStep] = []):
+        self.steps = steps
+
+    def __str__(self):
+        return f"SC Pipeline w/ {self.steps}"
+
     def add_step(self, step: PipelineStep) -> None:
         self.steps.append(step)
+
     def execute(self, data: List[AnnData]) -> AnnData:
         """
         Parameters:

@@ -1,6 +1,5 @@
 library(Seurat)
 library(SeuratData)
-library(SeuratDisk)
 library(sctransform)
 library(magrittr)
 library(glmGamPoi)

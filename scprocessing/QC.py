@@ -4,14 +4,16 @@ from typing import List
 from anndata import AnnData
 from .PipelineStep import PipelineStep
 
+
 class QC(PipelineStep):
-    def __init__(self):
-        pass
+    def __init__(self, method=""):
+        self.method = method
+
     def apply(self, datasets: List[AnnData]) -> List[AnnData]:
         """
         Parameters:
             datasets: List of AnnData objects
-            
+
         Return Value: A List of QC'd AnnData objects
         """
         print("Quality Control")
