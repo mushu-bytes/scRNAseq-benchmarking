@@ -21,15 +21,18 @@ class SelectPipeline:
         normalization: List[str] = ["zheng17", "seurat", "weinreb17"],
         integration: List[str] = ["merge", "harmony", "scanorama"],
         metrics: List[str] = ["jaccard", "silhouette", "davies", "calinski"],
+        store_all_cliusters: bool = True
     ) -> None:
         self.qc = qc
         self.normalization = normalization
         self.integration = integration
         self.metrics = metrics
+        self.store_all_cliusters = store_all_cliusters
+        self.clusters = {}
 
     def search(
         self, data: List[AnnData], key_metric: str = "jaccard"
-    ) -> Tuple[DataFrame, Pipeline, Tuple[str, str]]:
+    ) -> Tuple[DataFrame, Pipeline]:
         """
         Parameters:
             data, a list of AnnData objects
@@ -37,8 +40,11 @@ class SelectPipeline:
         Returns: A Tuple containing a formalized pipeline object and a DataFrame containing results
         """
         report = {}
-        # qc_data = QC().apply(datasets=data) # skipping qc for now
-        qc_data = data
+        # TODO: Add more qc steps and clean this code up
+        if self.qc:
+            qc_data = QC().apply(datasets=data) # skipping qc for now
+        else:
+            qc_data = data
 
         for norm in self.normalization:
             try:
@@ -67,6 +73,10 @@ class SelectPipeline:
                     )
                     continue
 
+                # storing clusters inside the pipeline selection:
+                if self.store_all_cliusters:
+                    self.clusters[(norm, integrate)] = integration_data
+                
                 # adding runtime into the report
                 report[(norm, integrate)] = evaluate(
                     integration_data, metrics=self.metrics
