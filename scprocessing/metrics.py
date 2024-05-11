@@ -3,7 +3,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import warnings
-from typing import List
+from typing import List, Dict
 from anndata import AnnData
 from sklearn.metrics import (
     silhouette_score,
@@ -76,6 +76,28 @@ def ari(data: AnnData, data_key: str = "Type", label: str = "cell_type") -> int:
     return nmi(data, data_key, label)
 
 
+def get_top_genes_per_cluster(
+    dataset: AnnData, key: str = "clusters", num_genes: int = 20
+) -> Dict:
+    """
+    Parameters
+        dataset: AnnData object with clusters precalculated
+        key: where the clusters are located within ann data object
+        num_genes: number of genes to grab
+    Return Value: dictionary containing top genes per cluster
+    """
+    clusters = dataset.obs[key].unique()  # get clusters
+    top_genes_per_cluster = {}
+    for c in clusters:
+        # get cells of the cluster
+        cluster_indices = np.where(dataset.obs["clusters"] == c)[0]
+        top_umis = (
+            dataset.X[cluster_indices].mean(axis=0).argsort()[-num_genes:]
+        )  # extract the top 20 genes
+        top_genes_per_cluster[c] = dataset.var.iloc[top_umis].index.tolist()
+    return top_genes_per_cluster
+
+
 def jaccard(dataset: AnnData, key: str = "clusters", num_genes: int = 100) -> float:
     """
     Parameters
@@ -85,16 +107,7 @@ def jaccard(dataset: AnnData, key: str = "clusters", num_genes: int = 100) -> fl
     Return Value: average jaccard score across pairs of clusters
     """
     clusters = dataset.obs[key].unique()  # get clusters
-    top_genes_per_cluster = {}
-    for c in clusters:
-        cluster_indices = np.where(dataset.obs["clusters"] == c)[
-            0
-        ]  # get cells of the cluster
-        top_umis = (
-            dataset.X[cluster_indices].mean(axis=0).argsort()[-num_genes:]
-        )  # extract the top 20 genes
-        top_genes_per_cluster[c] = dataset.var.iloc[top_umis].index.tolist()
-
+    top_genes_per_cluster = get_top_genes_per_cluster(dataset, key, num_genes=num_genes)
     # aggregate scores
     distances = []
     for c_1 in clusters:

@@ -1,17 +1,18 @@
 from .Pipeline import Pipeline
 import scanpy as sc
 import anndata as ad
-from typing import List, Tuple
+from typing import List, Tuple, Union, Callable
 from anndata import AnnData
 from pandas import DataFrame
 import warnings
 import time
 import pandas as pd
+import numpy as np
 
 from .Normalization import Normalization
 from .Integration import Integration
 from .QC import QC
-from .metrics import evaluate
+from .metrics import evaluate, get_top_genes_per_cluster
 
 
 class SelectPipeline:
@@ -21,6 +22,8 @@ class SelectPipeline:
         normalization: List[str] = ["zheng17", "seurat", "weinreb17"],
         integration: List[str] = ["merge", "harmony", "scanorama"],
         metrics: List[str] = ["jaccard", "silhouette", "davies", "calinski"],
+        key: str = "Type",
+        resolution_range: List[int] = [0.3],
         store_all_clusters: bool = True,
     ) -> None:
         self.qc = qc
@@ -29,6 +32,9 @@ class SelectPipeline:
         self.metrics = metrics
         self.store_all_clusters = store_all_clusters
         self.clusters = {}
+        self.top_genes = {}
+        self.key = key
+        self.resolution_range = resolution_range
 
     def search(
         self,
@@ -66,10 +72,13 @@ class SelectPipeline:
 
             for integrate in self.integration:
                 try:
-                    start_time = time.time()
-                    integration_data = Integration(method=integrate).apply(norm_data)
-                    end_time = time.time()
-                    integrate_time = end_time - start_time
+                    integration_data, integrate_time = self._search_resolution(
+                        norm_data,
+                        integrate,
+                        key_metric,
+                        key=self.key,
+                        resolution_range=self.resolution_range,
+                    )
                 except Exception as e:
                     warnings.warn(
                         f"Error occured while using {norm} normalization and {integrate} integration: {e}"
@@ -84,14 +93,18 @@ class SelectPipeline:
                     self.clusters[(norm, integrate)] = integration_data
 
                 # adding runtime into the report
-                report[(norm, integrate)] = evaluate(
-                    integration_data, metrics=self.metrics
-                ) + [norm_time + integrate_time]
+                report[(norm, integrate)] = (
+                    evaluate(integration_data, metrics=self.metrics)
+                    + [norm_time + integrate_time]
+                    + [len(integration_data.obs.clusters.cat.categories.tolist())]
+                )
+                # len(integration_data.obs.clusters.cat.categories.tolist()) is for getting number of clusters
 
         # generate report
         report_df = pd.DataFrame(report)
         report_df.index = self.metrics + [
-            "Runtime"
+            "Runtime",
+            "Number of Clusters",
         ]  # adding an additional element into the index for times
         report_df = (
             report_df.transpose()
@@ -100,5 +113,50 @@ class SelectPipeline:
             key_metric
         ].idxmax()  # retrieves index of highest key_metric
 
+        # store top genes per cluster in select pipeline object
+        self.top_genes = get_top_genes_per_cluster(
+            self.clusters[pipeline_steps], num_genes=20
+        )
+
         best_pipeline = Pipeline(steps=list(pipeline_steps))  # create pipeline
         return self.clusters[pipeline_steps], report_df, best_pipeline
+
+    def _search_resolution(
+        self,
+        data: List[AnnData],
+        method: Union[str, Callable],
+        key_metric: str,
+        key: str,
+        resolution_range: List[int],
+    ) -> Tuple[AnnData, int]:
+        """
+        Parameters:
+            data: list of ann data objects
+            method: what integration method to use
+            key_metric: what metric to score on
+            key: key delineating datasets in anndata object
+            res_range: range of resolution method to try
+        Return:
+            An anndata object
+        """
+        maxAcc = -1
+        clusters = None
+        top_time = -1
+        for res in resolution_range:
+            # TODO: have a copy in place function
+            # problem is that we are copying the data each time in this function.
+            # clean by moving this into integration
+            copy = [item.copy() for item in data]
+
+            # timing integration
+            start_time = time.time()
+            res = Integration(method=method, key=key, resolution=res).apply(copy)
+            end_time = time.time()
+            integrate_time = end_time - start_time
+
+            maxHere = evaluate(res, metrics=[key_metric])[0]
+            if maxHere > maxAcc:
+                clusters = res
+                maxAcc = maxHere
+                top_time = integrate_time
+        return clusters, top_time
