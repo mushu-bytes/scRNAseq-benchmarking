@@ -21,7 +21,7 @@ class SelectPipeline:
         normalization: List[str] = ["zheng17", "seurat", "weinreb17"],
         integration: List[str] = ["merge", "harmony", "scanorama"],
         metrics: List[str] = ["jaccard", "silhouette", "davies", "calinski"],
-        store_all_cliusters: bool = True
+        store_all_cliusters: bool = True,
     ) -> None:
         self.qc = qc
         self.normalization = normalization
@@ -42,7 +42,7 @@ class SelectPipeline:
         report = {}
         # TODO: Add more qc steps and clean this code up
         if self.qc:
-            qc_data = QC().apply(datasets=data) # skipping qc for now
+            qc_data = QC().apply(datasets=data)  # skipping qc for now
         else:
             qc_data = data
 
@@ -76,7 +76,7 @@ class SelectPipeline:
                 # storing clusters inside the pipeline selection:
                 if self.store_all_cliusters:
                     self.clusters[(norm, integrate)] = integration_data
-                
+
                 # adding runtime into the report
                 report[(norm, integrate)] = evaluate(
                     integration_data, metrics=self.metrics
@@ -84,6 +84,7 @@ class SelectPipeline:
 
         # generate report
         report_df = pd.DataFrame(report)
+        print(report_df)
         report_df.index = self.metrics + [
             "Runtime"
         ]  # adding an additional element into the index for times
