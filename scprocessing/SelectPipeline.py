@@ -12,7 +12,7 @@ import numpy as np
 from .Normalization import Normalization
 from .Integration import Integration
 from .QC import QC
-from .metrics import evaluate
+from .metrics import evaluate, get_top_genes_per_cluster
 
 
 class SelectPipeline:
@@ -23,7 +23,7 @@ class SelectPipeline:
         integration: List[str] = ["merge", "harmony", "scanorama"],
         metrics: List[str] = ["jaccard", "silhouette", "davies", "calinski"],
         key: str = "Type",
-        resolution_range: List[int] = np.arange(0.1, 0.9, 0.1),
+        resolution_range: List[int] = [0.3],
         store_all_clusters: bool = True,
     ) -> None:
         self.qc = qc
@@ -32,6 +32,7 @@ class SelectPipeline:
         self.metrics = metrics
         self.store_all_clusters = store_all_clusters
         self.clusters = {}
+        self.top_genes = {}
         self.key = key
         self.resolution_range = resolution_range
 
@@ -71,16 +72,13 @@ class SelectPipeline:
 
             for integrate in self.integration:
                 try:
-                    start_time = time.time()
-                    integration_data = _search_resolution(
-                        data,
+                    integration_data, integrate_time = self._search_resolution(
+                        norm_data,
                         integrate,
-                        self.key_metric,
+                        key_metric,
                         key=self.key,
                         resolution_range=self.resolution_range,
                     )
-                    end_time = time.time()
-                    integrate_time = end_time - start_time
                 except Exception as e:
                     warnings.warn(
                         f"Error occured while using {norm} normalization and {integrate} integration: {e}"
@@ -95,14 +93,18 @@ class SelectPipeline:
                     self.clusters[(norm, integrate)] = integration_data
 
                 # adding runtime into the report
-                report[(norm, integrate)] = evaluate(
-                    integration_data, metrics=self.metrics
-                ) + [norm_time + integrate_time]
+                report[(norm, integrate)] = (
+                    evaluate(integration_data, metrics=self.metrics)
+                    + [norm_time + integrate_time]
+                    + [len(integration_data.obs.clusters.cat.categories.tolist())]
+                )
+                # len(integration_data.obs.clusters.cat.categories.tolist()) is for getting number of clusters
 
         # generate report
         report_df = pd.DataFrame(report)
         report_df.index = self.metrics + [
-            "Runtime"
+            "Runtime",
+            "Number of Clusters",
         ]  # adding an additional element into the index for times
         report_df = (
             report_df.transpose()
@@ -110,6 +112,11 @@ class SelectPipeline:
         pipeline_steps = report_df[
             key_metric
         ].idxmax()  # retrieves index of highest key_metric
+
+        # store top genes per cluster in select pipeline object
+        self.top_genes = get_top_genes_per_cluster(
+            self.clusters[pipeline_steps], num_genes=20
+        )
 
         best_pipeline = Pipeline(steps=list(pipeline_steps))  # create pipeline
         return self.clusters[pipeline_steps], report_df, best_pipeline
@@ -120,8 +127,8 @@ class SelectPipeline:
         method: Union[str, Callable],
         key_metric: str,
         key: str,
-        res_range: List[int],
-    ) -> AnnData:
+        resolution_range: List[int],
+    ) -> Tuple[AnnData, int]:
         """
         Parameters:
             data: list of ann data objects
@@ -134,14 +141,22 @@ class SelectPipeline:
         """
         maxAcc = -1
         clusters = None
-        for res in res_range:
+        top_time = -1
+        for res in resolution_range:
             # TODO: have a copy in place function
             # problem is that we are copying the data each time in this function.
             # clean by moving this into integration
-            copy = data.copy()
+            copy = [item.copy() for item in data]
+
+            # timing integration
+            start_time = time.time()
             res = Integration(method=method, key=key, resolution=res).apply(copy)
-            maxHere = evaluate(integrate, metrics=[key_metric])[0]
+            end_time = time.time()
+            integrate_time = end_time - start_time
+
+            maxHere = evaluate(res, metrics=[key_metric])[0]
             if maxHere > maxAcc:
                 clusters = res
                 maxAcc = maxHere
-        return clusters
+                top_time = integrate_time
+        return clusters, top_time

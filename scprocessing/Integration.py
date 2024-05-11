@@ -46,7 +46,7 @@ class Integration(PipelineStep):
         print("Integrating Datasets")
         dataset = ad.concat(datasets)
         sc.pp.pca(dataset)
-
+        # TODO Separate clustering from integration
         # integrate, or if merge don't
         if self.integration:
             self.integration(dataset, self.key, adjusted_basis="X_integration")
