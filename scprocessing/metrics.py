@@ -50,7 +50,10 @@ def calinski(dataset: AnnData, key: str = "clusters") -> float:
     calinski = calinski_harabasz_score(dataset.X, dataset.obs[key])
     return calinski
 
-def cell_type_stats(data: AnnData, raw: AnnData, data_key: str = "Type", label: str = "cell_type") -> List[int]:
+
+def cell_type_stats(
+    data: AnnData, raw: AnnData, data_key: str = "Type", label: str = "cell_type"
+) -> List[int]:
     """
     Parameters:
         data: Integrated dataset
@@ -64,6 +67,7 @@ def cell_type_stats(data: AnnData, raw: AnnData, data_key: str = "Type", label: 
     hvg_overlap_score = hvg_overlap(raw, data, data_key)
     cell_cycle_score = cell_cycle(raw, data, data_key, organism="human")
     return [ari_score, nmi_score, hvg_overlap_score, cell_cycle_score]
+
 
 def jaccard(dataset: AnnData, key: str = "clusters", num_genes: int = 100) -> float:
     """

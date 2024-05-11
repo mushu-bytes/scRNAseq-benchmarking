@@ -37,7 +37,7 @@ class SelectPipeline:
         Parameters:
             data, a list of AnnData objects
             key_metric, metric to determine best method
-        Returns: 
+        Returns:
             A Tuple containing:
                 Best Integrated Data
                 DataFrame containing results

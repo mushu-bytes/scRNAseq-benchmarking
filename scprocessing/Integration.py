@@ -46,14 +46,14 @@ class Integration(PipelineStep):
         print("Integrating Datasets")
         dataset = ad.concat(datasets)
         sc.pp.pca(dataset)
-        
+
         # integrate, or if merge don't
         if self.integration:
             self.integration(dataset, self.key, adjusted_basis="X_integration")
             sc.pp.neighbors(dataset, use_rep="X_integration")
         else:
             sc.pp.neighbors(dataset)
-            
+
         sc.tl.umap(dataset)
         sc.tl.leiden(
             dataset,
