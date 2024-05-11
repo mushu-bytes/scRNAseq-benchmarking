@@ -11,6 +11,7 @@ from sklearn.metrics import (
     calinski_harabasz_score,
     jaccard_score,
 )
+from scib.metrics import nmi, cell_cycle, hvg_overlap, ari
 from typing import List
 
 
@@ -48,6 +49,31 @@ def calinski(dataset: AnnData, key: str = "clusters") -> float:
     """
     calinski = calinski_harabasz_score(dataset.X, dataset.obs[key])
     return calinski
+
+
+def ari(data: AnnData, data_key: str = "Type", label: str = "cell_type") -> int:
+    """
+    Parameters:
+        data: Integrated dataset
+        raw: Unintegrated dataset. Preproccessed data concatenated
+        key: column delineating datasets
+        label: column containing cell type labels
+    Return Value: ari score
+    """
+    # hvg_overlap_score = hvg_overlap(raw, data, data_key)
+    return ari(data, data_key, label)
+
+
+def ari(data: AnnData, data_key: str = "Type", label: str = "cell_type") -> int:
+    """
+    Parameters:
+        data: Integrated dataset
+        raw: Unintegrated dataset. Preproccessed data concatenated
+        key: column delineating datasets
+        label: column containing cell type labels
+    Return Value: ari score
+    """
+    return nmi(data, data_key, label)
 
 
 def jaccard(dataset: AnnData, key: str = "clusters", num_genes: int = 100) -> float:
@@ -91,6 +117,7 @@ def evaluate(
     key: str = "clusters",
     metrics: List[str] = ["jaccard", "silhouette", "davies", "calinski"],
     num_genes: int = 100,
+    cell_type: str = "cell_type",
 ) -> List[float]:
     """
     Parameters
@@ -102,7 +129,6 @@ def evaluate(
     """
     scores = []
     for m in metrics:
-        print(m)
         if m == "jaccard":
             scores.append(jaccard(dataset, key, num_genes))
         elif m == "silhouette":
@@ -111,6 +137,10 @@ def evaluate(
             scores.append(davies(dataset, key))
         elif m == "calinski":
             scores.append(calinski(dataset, key))
+        elif m == "ari":
+            scores.append(ari(dataset, key, cell_type))
+        elif m == "nmi":
+            scores.append(nmi(dataset, key, cell_type))
         else:
             warnings.warn(f"Invalid Metric: {m}")
     return scores

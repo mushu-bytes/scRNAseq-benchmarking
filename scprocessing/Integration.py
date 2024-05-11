@@ -1,6 +1,6 @@
 import scanpy as sc
 import anndata as ad
-from typing import List
+from typing import List, Union, Callable
 from anndata import AnnData
 import scanpy.external as sce
 from .PipelineStep import PipelineStep
@@ -8,7 +8,10 @@ from .PipelineStep import PipelineStep
 
 class Integration(PipelineStep):
     def __init__(
-        self, method: str = "scanorama", key: str = "Trial", resolution: int = 0.3
+        self,
+        method: Union[str, Callable] = "scanorama",
+        key: str = "Type",
+        resolution: int = 0.3,
     ):
         """
         Method: Integration Method
@@ -16,7 +19,19 @@ class Integration(PipelineStep):
         Resolution: Clustering resolution
         will add additional parameters for normalization
         """
-        self.method = method
+        methods = {
+            "scanorama": sce.pp.scanorama_integrate,
+            "harmony": sce.pp.harmony_integrate,
+            "merge": None,  # just do nothing if merge
+        }
+        if type(method) == str:
+            if method in methods:
+                self.integration = methods[method]
+            else:
+                raise ValueError("Invalid Integration Method")
+        else:
+            self.integration = method
+
         self.key = key
         self.resolution = resolution
 
@@ -31,16 +46,14 @@ class Integration(PipelineStep):
         print("Integrating Datasets")
         dataset = ad.concat(datasets)
         sc.pp.pca(dataset)
-        if self.method == "scanorama":
-            sce.pp.scanorama_integrate(dataset, self.key, verbose=1)
-            sc.pp.neighbors(dataset, use_rep="X_scanorama")
-        elif self.method == "harmony":
-            sce.pp.harmony_integrate(dataset, self.key, verbose=1)
-            sc.pp.neighbors(dataset, use_rep="X_pca_harmony")
-        elif self.method == "merge":
-            sc.pp.neighbors(dataset, use_rep="X_pca")
+
+        # integrate, or if merge don't
+        if self.integration:
+            self.integration(dataset, self.key, adjusted_basis="X_integration")
+            sc.pp.neighbors(dataset, use_rep="X_integration")
         else:
-            raise ValueError("Invalid Integration Method")
+            sc.pp.neighbors(dataset)
+
         sc.tl.umap(dataset)
         sc.tl.leiden(
             dataset,

@@ -21,24 +21,36 @@ class SelectPipeline:
         normalization: List[str] = ["zheng17", "seurat", "weinreb17"],
         integration: List[str] = ["merge", "harmony", "scanorama"],
         metrics: List[str] = ["jaccard", "silhouette", "davies", "calinski"],
+        store_all_clusters: bool = True,
     ) -> None:
         self.qc = qc
         self.normalization = normalization
         self.integration = integration
         self.metrics = metrics
+        self.store_all_clusters = store_all_clusters
+        self.clusters = {}
 
     def search(
-        self, data: List[AnnData], key_metric: str = "jaccard"
-    ) -> Tuple[DataFrame, Pipeline, Tuple[str, str]]:
+        self,
+        data: List[AnnData],
+        key_metric: str = "jaccard",
+    ) -> Tuple[AnnData, DataFrame, Pipeline]:
         """
         Parameters:
             data, a list of AnnData objects
             key_metric, metric to determine best method
-        Returns: A Tuple containing a formalized pipeline object and a DataFrame containing results
+        Returns:
+            A Tuple containing:
+                Best Integrated Data
+                DataFrame containing results
+                a formalized pipeline object
         """
         report = {}
-        # qc_data = QC().apply(datasets=data) # skipping qc for now
-        qc_data = data
+        # TODO: Add more qc steps and clean this code up
+        if self.qc:
+            qc_data = QC().apply(datasets=data)  # skipping qc for now
+        else:
+            qc_data = data
 
         for norm in self.normalization:
             try:
@@ -67,6 +79,10 @@ class SelectPipeline:
                     )
                     continue
 
+                # storing clusters inside the pipeline selection:
+                if self.store_all_clusters:
+                    self.clusters[(norm, integrate)] = integration_data
+
                 # adding runtime into the report
                 report[(norm, integrate)] = evaluate(
                     integration_data, metrics=self.metrics
@@ -85,4 +101,4 @@ class SelectPipeline:
         ].idxmax()  # retrieves index of highest key_metric
 
         best_pipeline = Pipeline(steps=list(pipeline_steps))  # create pipeline
-        return report_df, best_pipeline
+        return self.clusters[pipeline_steps], report_df, best_pipeline
