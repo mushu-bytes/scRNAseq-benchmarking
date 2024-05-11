@@ -10,7 +10,7 @@ class Integration(PipelineStep):
     def __init__(
         self,
         method: Union[str, Callable] = "scanorama",
-        key: str = "Trial",
+        key: str = "Type",
         resolution: int = 0.3,
     ):
         """

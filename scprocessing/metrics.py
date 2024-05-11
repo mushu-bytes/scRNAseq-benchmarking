@@ -11,6 +11,7 @@ from sklearn.metrics import (
     calinski_harabasz_score,
     jaccard_score,
 )
+from scib.metrics import nmi, cell_cycle, hvg_overlap, ari
 from typing import List
 
 
@@ -49,6 +50,20 @@ def calinski(dataset: AnnData, key: str = "clusters") -> float:
     calinski = calinski_harabasz_score(dataset.X, dataset.obs[key])
     return calinski
 
+def cell_type_stats(data: AnnData, raw: AnnData, data_key: str = "Type", label: str = "cell_type") -> List[int]:
+    """
+    Parameters:
+        data: Integrated dataset
+        raw: Unintegrated dataset. Preproccessed data concatenated
+        key: column delineating datasets
+        label: column containing cell type labels
+    Return Value: List of scores
+    """
+    ari_score = ari(data, data_key, label)
+    nmi_score = nmi(data, data_key, label)
+    hvg_overlap_score = hvg_overlap(raw, data, data_key)
+    cell_cycle_score = cell_cycle(raw, data, data_key, organism="human")
+    return [ari_score, nmi_score, hvg_overlap_score, cell_cycle_score]
 
 def jaccard(dataset: AnnData, key: str = "clusters", num_genes: int = 100) -> float:
     """
@@ -102,7 +117,6 @@ def evaluate(
     """
     scores = []
     for m in metrics:
-        print(m)
         if m == "jaccard":
             scores.append(jaccard(dataset, key, num_genes))
         elif m == "silhouette":
