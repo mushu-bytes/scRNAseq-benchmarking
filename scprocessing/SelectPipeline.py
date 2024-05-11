@@ -31,7 +31,9 @@ class SelectPipeline:
         self.clusters = {}
 
     def search(
-        self, data: List[AnnData], key_metric: str = "jaccard"
+        self,
+        data: List[AnnData],
+        key_metric: str = "jaccard",
     ) -> Tuple[AnnData, DataFrame, Pipeline]:
         """
         Parameters:

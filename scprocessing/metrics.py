@@ -51,22 +51,29 @@ def calinski(dataset: AnnData, key: str = "clusters") -> float:
     return calinski
 
 
-def cell_type_stats(
-    data: AnnData, raw: AnnData, data_key: str = "Type", label: str = "cell_type"
-) -> List[int]:
+def ari(data: AnnData, data_key: str = "Type", label: str = "cell_type") -> int:
     """
     Parameters:
         data: Integrated dataset
         raw: Unintegrated dataset. Preproccessed data concatenated
         key: column delineating datasets
         label: column containing cell type labels
-    Return Value: List of scores
+    Return Value: ari score
     """
-    ari_score = ari(data, data_key, label)
-    nmi_score = nmi(data, data_key, label)
-    hvg_overlap_score = hvg_overlap(raw, data, data_key)
-    cell_cycle_score = cell_cycle(raw, data, data_key, organism="human")
-    return [ari_score, nmi_score, hvg_overlap_score, cell_cycle_score]
+    # hvg_overlap_score = hvg_overlap(raw, data, data_key)
+    return ari(data, data_key, label)
+
+
+def ari(data: AnnData, data_key: str = "Type", label: str = "cell_type") -> int:
+    """
+    Parameters:
+        data: Integrated dataset
+        raw: Unintegrated dataset. Preproccessed data concatenated
+        key: column delineating datasets
+        label: column containing cell type labels
+    Return Value: ari score
+    """
+    return nmi(data, data_key, label)
 
 
 def jaccard(dataset: AnnData, key: str = "clusters", num_genes: int = 100) -> float:
@@ -110,6 +117,7 @@ def evaluate(
     key: str = "clusters",
     metrics: List[str] = ["jaccard", "silhouette", "davies", "calinski"],
     num_genes: int = 100,
+    cell_type: str = "cell_type",
 ) -> List[float]:
     """
     Parameters
@@ -129,6 +137,10 @@ def evaluate(
             scores.append(davies(dataset, key))
         elif m == "calinski":
             scores.append(calinski(dataset, key))
+        elif m == "ari":
+            scores.append(ari(dataset, key, cell_type))
+        elif m == "nmi":
+            scores.append(nmi(dataset, key, cell_type))
         else:
             warnings.warn(f"Invalid Metric: {m}")
     return scores
