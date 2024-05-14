@@ -51,29 +51,29 @@ def calinski(dataset: AnnData, key: str = "clusters") -> float:
     return calinski
 
 
-def ari(data: AnnData, data_key: str = "Type", label: str = "cell_type") -> int:
-    """
-    Parameters:
-        data: Integrated dataset
-        raw: Unintegrated dataset. Preproccessed data concatenated
-        key: column delineating datasets
-        label: column containing cell type labels
-    Return Value: ari score
-    """
-    # hvg_overlap_score = hvg_overlap(raw, data, data_key)
-    return ari(data, data_key, label)
+# def ari_wrapper(data: AnnData, data_key: str = "Type", label: str = "cell_type") -> int:
+#     """
+#     Parameters:
+#         data: Integrated dataset
+#         raw: Unintegrated dataset. Preproccessed data concatenated
+#         key: column delineating datasets
+#         label: column containing cell type labels
+#     Return Value: ari score
+#     """
+#     # hvg_overlap_score = hvg_overlap(raw, data, data_key)
+#     return ari(data, data_key, label)
 
 
-def ari(data: AnnData, data_key: str = "Type", label: str = "cell_type") -> int:
-    """
-    Parameters:
-        data: Integrated dataset
-        raw: Unintegrated dataset. Preproccessed data concatenated
-        key: column delineating datasets
-        label: column containing cell type labels
-    Return Value: ari score
-    """
-    return nmi(data, data_key, label)
+# def nmi_wrapper(data: AnnData, data_key: str = "Type", label: str = "cell_type") -> int:
+#     """
+#     Parameters:
+#         data: Integrated dataset
+#         raw: Unintegrated dataset. Preproccessed data concatenated
+#         key: column delineating datasets
+#         label: column containing cell type labels
+#     Return Value: ari score
+#     """
+#     return nmi(data, data_key, label)
 
 
 def get_top_genes_per_cluster(
