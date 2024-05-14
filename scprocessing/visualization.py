@@ -7,7 +7,7 @@ import anndata as ad
 from anndata import AnnData
 
 
-def visualize_report(report: DataFrame, data: AnnData, path: str) -> None:
+def visualize_report(report: DataFrame, data: AnnData, path: str, labels=["Jaccard", "Adjusted Rand Index", "Normalized Mutual Information", "Runtime", "Number of Clusters"]) -> None:
     """
     Parameters:
         Report: Dataframe of results generated from Select Pipeline
@@ -20,14 +20,6 @@ def visualize_report(report: DataFrame, data: AnnData, path: str) -> None:
     res = report.reset_index().rename(
         columns={"level_0": "Normalization", "level_1": "Integration"}
     )
-    labels = [
-        "Jaccard",
-        "Adjusted Rand Index",
-        "Normalized Mutual Information",
-        "Runtime",
-        "Number of Clusters",
-    ]
-
     fig, axs = plt.subplots(2, 3, figsize=(48, 32))
     # Remove the last subplot
     axes = [axs[0, 0], axs[0, 1], axs[0, 2], axs[1, 0], axs[1, 1]]
@@ -49,15 +41,12 @@ def visualize_report(report: DataFrame, data: AnnData, path: str) -> None:
         axes[i].tick_params(axis="both", which="major", labelsize=24)
 
     # adding the clustering
-    sc.pl.umap(
+    umap = sc.pl.umap(
         data,
         color=["clusters"],
         palette=sc.pl.palettes.default_20,
         ax=axs[1, 2],
         legend_loc="None",
+        title=f"{data.uns['Pipeline Steps']}",
     )
-    umap = axs[1, 2]
-    umap.set_xlabel("Normalization and Integration", fontsize=28)
-    umap.set_ylabel(labels[i], fontsize=28)
-    umap.tick_params(axis="both", which="major", labelsize=24)
     fig.savefig(path)

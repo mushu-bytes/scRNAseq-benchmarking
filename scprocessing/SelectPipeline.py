@@ -31,6 +31,7 @@ class SelectPipeline:
         self.integration = integration
         self.metrics = metrics
         self.store_all_clusters = store_all_clusters
+        # TODO: PUT CLUSTERS NOT IN PIPELINE BUT IN ANNDATA OBJECT
         self.clusters = {}
         self.top_genes = {}
         self.key = key
@@ -88,9 +89,11 @@ class SelectPipeline:
                     )
                     continue
 
+                # TODO: BUG; rename self.clusters to not clusters
                 # storing clusters inside the pipeline selection:
-                if self.store_all_clusters:
-                    self.clusters[(norm, integrate)] = integration_data
+                self.clusters[(norm, integrate)] = integration_data
+                self.clusters[(norm, integrate)].uns["Pipeline Steps"] = (norm, integrate)
+                    
 
                 # adding runtime into the report
                 report[(norm, integrate)] = (
@@ -113,10 +116,12 @@ class SelectPipeline:
             key_metric
         ].idxmax()  # retrieves index of highest key_metric
 
+        # TODO: BUG. self.clusters is only available when the store all clusters field is open
         # store top genes per cluster in select pipeline object
         self.top_genes = get_top_genes_per_cluster(
             self.clusters[pipeline_steps], num_genes=20
         )
+        
 
         best_pipeline = Pipeline(steps=list(pipeline_steps))  # create pipeline
         return self.clusters[pipeline_steps], report_df, best_pipeline
@@ -142,7 +147,7 @@ class SelectPipeline:
         maxAcc = -1
         clusters = None
         top_time = -1
-        for res in resolution_range:
+        for resolution in resolution_range:
             # TODO: have a copy in place function
             # problem is that we are copying the data each time in this function.
             # clean by moving this into integration
@@ -150,7 +155,8 @@ class SelectPipeline:
 
             # timing integration
             start_time = time.time()
-            res = Integration(method=method, key=key, resolution=res).apply(copy)
+            res = Integration(method=method, key=key, resolution=resolution).apply(copy)
+            res.uns["resolution"] = resolution
             end_time = time.time()
             integrate_time = end_time - start_time
 
