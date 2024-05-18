@@ -62,5 +62,5 @@ class Integration(PipelineStep):
             directed=False,
             resolution=self.resolution,
         )
-        sc.pl.umap(dataset, color=["clusters"], palette=sc.pl.palettes.default_20)
+        sc.pl.umap(dataset, color=[self.key], palette=sc.pl.palettes.default_20)
         return dataset
