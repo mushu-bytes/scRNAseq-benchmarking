@@ -92,8 +92,10 @@ class SelectPipeline:
                 # TODO: BUG; rename self.clusters to not clusters
                 # storing clusters inside the pipeline selection:
                 self.clusters[(norm, integrate)] = integration_data
-                self.clusters[(norm, integrate)].uns["Pipeline Steps"] = (norm, integrate)
-                    
+                self.clusters[(norm, integrate)].uns["Pipeline Steps"] = (
+                    norm,
+                    integrate,
+                )
 
                 # adding runtime into the report
                 report[(norm, integrate)] = (
@@ -121,7 +123,6 @@ class SelectPipeline:
         self.top_genes = get_top_genes_per_cluster(
             self.clusters[pipeline_steps], num_genes=20
         )
-        
 
         best_pipeline = Pipeline(steps=list(pipeline_steps))  # create pipeline
         return self.clusters[pipeline_steps], report_df, best_pipeline
