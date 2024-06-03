@@ -7,7 +7,18 @@ import anndata as ad
 from anndata import AnnData
 
 
-def visualize_report(report: DataFrame, data: AnnData, path: str, labels=["Jaccard", "Adjusted Rand Index", "Normalized Mutual Information", "Runtime", "Number of Clusters"]) -> None:
+def visualize_report(
+    report: DataFrame,
+    data: AnnData,
+    path: str,
+    labels=[
+        "Jaccard",
+        "Adjusted Rand Index",
+        "Normalized Mutual Information",
+        "Runtime",
+        "Number of Clusters",
+    ],
+) -> None:
     """
     Parameters:
         Report: Dataframe of results generated from Select Pipeline
