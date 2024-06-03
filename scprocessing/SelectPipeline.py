@@ -92,10 +92,6 @@ class SelectPipeline:
                 # TODO: BUG; rename self.clusters to not clusters
                 # storing clusters inside the pipeline selection:
                 self.clusters[(norm, integrate)] = integration_data
-                self.clusters[(norm, integrate)].uns["Pipeline Steps"] = (
-                    norm,
-                    integrate,
-                )
 
                 # adding runtime into the report
                 report[(norm, integrate)] = (
