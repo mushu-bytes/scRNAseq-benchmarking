@@ -55,12 +55,15 @@ class Integration(PipelineStep):
             sc.pp.neighbors(dataset)
 
         sc.tl.umap(dataset)
+
+        # leiden must be passed with igraph and directed = False
+        # ^ Future Defaults as current implementation will change soon.
         sc.tl.leiden(
             dataset,
             key_added="clusters",
-            n_iterations=2,
-            directed=False,
             resolution=self.resolution,
+            flavor="igraph",
+            directed=False
         )
         sc.pl.umap(dataset, color=[self.key], palette=sc.pl.palettes.default_20)
         return dataset

@@ -10,7 +10,7 @@ from anndata import AnnData
 def visualize_report(
     report: DataFrame,
     data: AnnData,
-    path: str,
+    path: str= None,
     labels=[
         "Jaccard",
         "Adjusted Rand Index",
@@ -58,6 +58,6 @@ def visualize_report(
         palette=sc.pl.palettes.default_20,
         ax=axs[1, 2],
         legend_loc="None",
-        title=f"{data.uns['Pipeline Steps']}",
     )
-    fig.savefig(path)
+    if path:
+        fig.savefig(path)
